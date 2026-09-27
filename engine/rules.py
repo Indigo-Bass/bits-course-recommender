@@ -1,15 +1,6 @@
 import sqlite3
 import json
 
-# The graduation rules for the B.E. Computer Science program
-PROGRAMME_RULES = {
-    "B.E. Computer Science": {
-        "DEL": 4,
-        "HUEL": 3,
-        "OPEL": 5
-    }
-}
-
 def get_db_connection():
     # Connect to the DB and format rows as dictionaries for easy JSON conversion later
     conn = sqlite3.connect('data_processed/app.db')
@@ -17,19 +8,25 @@ def get_db_connection():
     return conn
 
 def calculate_remaining_requirements(profile):
-    """Calculates remaining CDC, DEL, HUEL, and OPEL requirements deterministically."""
+    """Calculates remaining requirements dynamically from the parsed Programme_Rules table."""
     completed = profile.get('completed_courses', [])
     degree = profile.get('degree', 'B.E. Computer Science')
     
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # 1. Check remaining CDCs (Compulsory courses)
+    # Fetch dynamic rules for the specific degree
+    cursor.execute("SELECT * FROM Programme_Rules WHERE degree = ?", (degree,))
+    rules = cursor.fetchone()
+    
+    if not rules:
+        # Fallback if degree isn't parsed
+        rules = {'del_units': 4, 'huel_units': 3, 'opel_units': 5}
+    
     cursor.execute("SELECT course_code FROM Course WHERE category = 'CDC'")
     all_cdcs = [row['course_code'] for row in cursor.fetchall()]
     remaining_cdcs = [cdc for cdc in all_cdcs if cdc not in completed]
     
-    # 2. Count completed DELs
     completed_dels = 0
     if completed:
         placeholders = ','.join(['?'] * len(completed))
@@ -38,13 +35,11 @@ def calculate_remaining_requirements(profile):
     
     conn.close()
     
-    rules = PROGRAMME_RULES.get(degree, PROGRAMME_RULES["B.E. Computer Science"])
-    
     return {
         "remaining_cdcs": remaining_cdcs,
-        "DEL": {"completed": completed_dels, "required": rules["DEL"]},
-        "HUEL": {"completed": 0, "required": rules["HUEL"]}, # Mocked for this MVP scope
-        "OPEL": {"completed": 0, "required": rules["OPEL"]}  # Mocked for this MVP scope
+        "DEL": {"completed": completed_dels, "required": rules['del_units']},
+        "HUEL": {"completed": 0, "required": rules['huel_units']}, 
+        "OPEL": {"completed": 0, "required": rules['opel_units']} 
     }
 
 def check_eligibility(course_code, completed_courses):

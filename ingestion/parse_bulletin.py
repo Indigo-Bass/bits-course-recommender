@@ -7,7 +7,7 @@ def update_huels_and_prereqs():
     conn = sqlite3.connect('data_processed/app.db')
     cursor = conn.cursor()
 
-    print("1. Scraping timetable[1].pdf for all HUELs...")
+    print("1. Scraping timetable.pdf for all HUELs...")
     
     with pdfplumber.open("data_raw/timetable.pdf") as pdf:
         for page in pdf.pages:
@@ -32,7 +32,7 @@ def update_huels_and_prereqs():
     cursor.execute("SELECT COUNT(*) FROM Course WHERE category = 'HUEL'")
     print(f"-> Successfully extracted {cursor.fetchone()[0]} HUELs into the database!\n")
 
-    print("2. Scanning bulletin[1].pdf for real prerequisites...")
+    print("2. Scanning bulletin.pdf for real prerequisites...")
     cursor.execute("SELECT course_code FROM Course")
     courses = [row[0] for row in cursor.fetchall()]
 
