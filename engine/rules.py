@@ -57,7 +57,7 @@ def calculate_remaining_requirements(profile):
                 completed_opels += 1
             
             # --- X-RAY VISION ---
-            # This prints the math live to your terminal every time you select a course
+            # This prints the math live to the terminal every time you select a course
             print(f"Engine processed: {code} ({cat}) -> DELs: {completed_dels}, HUELs: {completed_huels}, OPELs: {completed_opels}")
                 
     conn.close()
