@@ -28,7 +28,18 @@ st.title("🎓 BITS Academic Course Recommender")
 st.sidebar.header("Student Profile")
 campus = st.sidebar.selectbox("Campus", ["Pilani", "Goa", "Hyderabad", "Dubai"])
 batch = st.sidebar.number_input("Batch Year", min_value=2020, max_value=2026, value=2023)
-degree = st.sidebar.selectbox("Degree", ["B.E. Computer Science"])
+degrees = [
+    "B.E. Chemical", "B.E. Civil", "B.E. Computer Science",
+    "B.E. Electrical and Electronics", "B.E. Electronics and Instrumentation",
+    "B.E. Electronics and Communication", "B.E. Electronics and Computer", 
+    "B.E. Environmental and Sustainability", "B.E. Manufacturing", 
+    "B.E. Mathematics and Computing", "B.E. Mechanical", "B. Pharm.",
+    "M.Sc. Biological Sciences", "M.Sc. Chemistry", "M.Sc. Economics",
+    "M.Sc. Mathematics", "M.Sc. Physics", "M.Sc. Semiconductor and Nanoscience",
+    "M.Sc. General Studies"
+]
+# index=2 sets B.E. Computer Science as the default
+degree = st.sidebar.selectbox("Degree", degrees, index=2)
 current_semester = st.sidebar.number_input("Current Semester", min_value=1, max_value=8, value=5)
 
 all_courses = get_all_courses()
@@ -53,7 +64,7 @@ st.subheader("Academic Progress")
 try:
     reqs = calculate_remaining_requirements(student_profile)
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Remaining CDCs", len(reqs.get("remaining_cdcs", [])))
     with col2:
@@ -61,6 +72,10 @@ try:
         del_req = reqs["DEL"]["required"]
         st.progress(min(del_comp / del_req, 1.0) if del_req > 0 else 1.0, text=f"DELs: {del_comp}/{del_req} Completed")
     with col3:
+        huel_comp = reqs["HUEL"]["completed"]
+        huel_req = reqs["HUEL"]["required"]
+        st.progress(min(huel_comp / huel_req, 1.0) if huel_req > 0 else 1.0, text=f"HUELs: {huel_comp}/{huel_req}")
+    with col4:
         opel_comp = reqs["OPEL"]["completed"]
         opel_req = reqs["OPEL"]["required"]
         st.progress(min(opel_comp / opel_req, 1.0) if opel_req > 0 else 1.0, text=f"OPELs: {opel_comp}/{opel_req} Completed")

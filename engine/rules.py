@@ -8,38 +8,65 @@ def get_db_connection():
     return conn
 
 def calculate_remaining_requirements(profile):
-    """Calculates remaining requirements dynamically from the parsed Programme_Rules table."""
+    """Calculates remaining requirements, including the OPEL spillover rule."""
     completed = profile.get('completed_courses', [])
     degree = profile.get('degree', 'B.E. Computer Science')
     
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Fetch dynamic rules for the specific degree
     cursor.execute("SELECT * FROM Programme_Rules WHERE degree = ?", (degree,))
     rules = cursor.fetchone()
-    
     if not rules:
-        # Fallback if degree isn't parsed
         rules = {'del_units': 4, 'huel_units': 3, 'opel_units': 5}
+        
+    req_dels = int(rules['del_units'])
+    req_huels = int(rules['huel_units'])
+    req_opels = int(rules['opel_units'])
     
     cursor.execute("SELECT course_code FROM Course WHERE category = 'CDC'")
     all_cdcs = [row['course_code'] for row in cursor.fetchall()]
     remaining_cdcs = [cdc for cdc in all_cdcs if cdc not in completed]
     
     completed_dels = 0
+    completed_huels = 0
+    completed_opels = 0
+    
     if completed:
         placeholders = ','.join(['?'] * len(completed))
-        cursor.execute(f"SELECT course_code FROM Course WHERE category = 'DEL' AND course_code IN ({placeholders})", completed)
-        completed_dels = len(cursor.fetchall())
-    
+        cursor.execute(f"SELECT course_code, category FROM Course WHERE course_code IN ({placeholders})", completed)
+        
+        for row in cursor.fetchall():
+            code = row['course_code']
+            cat = row['category']
+            
+            if code in all_cdcs:
+                continue
+                
+            if cat == 'DEL':
+                if completed_dels < req_dels:
+                    completed_dels += 1
+                else:
+                    completed_opels += 1
+            elif cat == 'HUEL':
+                if completed_huels < req_huels:
+                    completed_huels += 1
+                else:
+                    completed_opels += 1
+            else:
+                completed_opels += 1
+            
+            # --- X-RAY VISION ---
+            # This prints the math live to your terminal every time you select a course
+            print(f"Engine processed: {code} ({cat}) -> DELs: {completed_dels}, HUELs: {completed_huels}, OPELs: {completed_opels}")
+                
     conn.close()
     
     return {
         "remaining_cdcs": remaining_cdcs,
-        "DEL": {"completed": completed_dels, "required": rules['del_units']},
-        "HUEL": {"completed": 0, "required": rules['huel_units']}, 
-        "OPEL": {"completed": 0, "required": rules['opel_units']} 
+        "DEL": {"completed": completed_dels, "required": req_dels},
+        "HUEL": {"completed": completed_huels, "required": req_huels}, 
+        "OPEL": {"completed": completed_opels, "required": req_opels} 
     }
 
 def check_eligibility(course_code, completed_courses):
