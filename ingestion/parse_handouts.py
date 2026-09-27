@@ -36,10 +36,9 @@ def parse_handouts():
             with pdfplumber.open(filepath) as pdf:
                 text = "".join([page.extract_text() for page in pdf.pages if page.extract_text()])
                 
-                # Check for explicit mention of attendance
-                if re.search(r'attendance', text, re.IGNORECASE):
+                # Check for explicit mention of attendance or class participation
+                if re.search(r'attendance|class participation', text, re.IGNORECASE):
                     attendance_policy = "Mentioned in handout (See PDF)"
-                    
                 # Extract makeup policy text for the LLM to analyze later
                 makeup_match = re.search(r'(make-?up.*?)(?=\n\n|\Z)', text, re.IGNORECASE | re.DOTALL)
                 if makeup_match:

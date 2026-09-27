@@ -74,7 +74,7 @@ def check_eligibility(course_code, completed_courses):
         
     return False, "Unknown prerequisite structure."
 
-def get_eligible_courses(category=None, no_midsem=False, profile=None):
+def get_eligible_courses(category=None, no_midsem=False, no_8am=False, profile=None):
     """
     This is the exact Tool the LLM will call. 
     It queries SQLite, filters out ineligible courses, and attaches source citations.
@@ -89,9 +89,10 @@ def get_eligible_courses(category=None, no_midsem=False, profile=None):
     
     query = """
         SELECT c.course_code, c.title, c.units, c.category, c.topics,
-               h.attendance_policy, h.makeup_policy, h.midsem_date
+               h.attendance_policy, h.makeup_policy, h.midsem_date, t.days, t.hours
         FROM Course c
         LEFT JOIN Handout_Data h ON c.course_code = h.course_code
+        LEFT JOIN Timetable t ON c.course_code = t.course_code
         WHERE 1=1
     """
     params = []

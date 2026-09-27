@@ -22,12 +22,12 @@ def process_query(user_query, student_profile):
     """
     
     # We wrap our tool so Gemini doesn't have to guess the student profile
-    def get_eligible_courses_tool(category: str = None, no_midsem: bool = False):
+    def get_eligible_courses_tool(category: str = None, no_midsem: bool = False, no_8am: bool = False):
         """
         Return courses the student is eligible for, filtered by category and structural properties. 
-        Never returns unverified data.
+        Never returns unverified data. Set no_8am to True if the user wants to avoid 8 AM classes.
         """
-        return get_eligible_courses(category=category, no_midsem=no_midsem, profile=student_profile)
+        return get_eligible_courses(category=category, no_midsem=no_midsem, no_8am=no_8am, profile=student_profile)
 
     # Initialize a chat session using the new SDK and gemini-2.5-flash
     chat = client.chats.create(
